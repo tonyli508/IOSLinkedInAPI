@@ -74,7 +74,7 @@
   NSString *url = [NSString stringWithFormat:accessTokenUrl, authorizationCode, [self.application.redirectURL LIAEncode], self.application.clientId, self.application.clientSecret];
 
 #ifdef isSessionManager // check if should use AFHTTPSessionManager or AFHTTPRequestOperationManager
-    [self POST:url parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+    [self POST:url parameters:nil headers:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         
         [self storeCredentials:responseObject];
         success(responseObject);
@@ -88,7 +88,7 @@
           [self storeCredentials:responseObject];
           success(responseObject);
           
-      }  failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+      } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         failure(error);
       }];
 #endif
@@ -109,44 +109,44 @@
 }
 
 - (void)getAuthorizationCode:(void (^)(NSString *))success cancel:(void (^)(void))cancel failure:(void (^)(NSError *))failure {
-  LIALinkedInAuthorizationViewController *authorizationViewController = [[LIALinkedInAuthorizationViewController alloc]
-      initWithApplication:
-          self.application
-                  success:^(NSString *code) {
-                    [self hideAuthenticateView];
-                    if (success) {
-                      success(code);
-                    }
-                  }
-                   cancel:^{
-                     [self hideAuthenticateView];
-                     if (cancel) {
-                       cancel();
-                     }
-                   } failure:^(NSError *error) {
+    LIALinkedInAuthorizationViewController *authorizationViewController = [[LIALinkedInAuthorizationViewController alloc]
+                                                                           initWithApplication:
+                                                                           self.application
+                                                                           success:^(NSString *code) {
+        [self hideAuthenticateView];
+        if (success) {
+            success(code);
+        }
+    }
+                                                                           cancel:^{
+        [self hideAuthenticateView];
+        if (cancel) {
+            cancel();
+        }
+    } failure:^(NSError *error) {
         [self hideAuthenticateView];
         if (failure) {
-          failure(error);
+            failure(error);
         }
-      }];
-  [self showAuthorizationView:authorizationViewController];
+    }];
+    [self showAuthorizationView:authorizationViewController];
 }
 
 - (void)showAuthorizationView:(LIALinkedInAuthorizationViewController *)authorizationViewController {
-  if (self.presentingViewController == nil)
-    self.presentingViewController = [[UIApplication sharedApplication] keyWindow].rootViewController;
-
-  UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:authorizationViewController];
-
-  if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-    nc.modalPresentationStyle = UIModalPresentationFormSheet;
-  }
-
-  [self.presentingViewController presentViewController:nc animated:YES completion:nil];
+    if (self.presentingViewController == nil)
+        self.presentingViewController = [[UIApplication sharedApplication] keyWindow].rootViewController;
+    
+    UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:authorizationViewController];
+    
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+        nc.modalPresentationStyle = UIModalPresentationFormSheet;
+    }
+    
+    [self.presentingViewController presentViewController:nc animated:YES completion:nil];
 }
 
 - (void)hideAuthenticateView {
-  [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+    [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
 }
 
 
