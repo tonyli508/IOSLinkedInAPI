@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 #import "LIALinkedInAuthorizationViewController.h"
 #import "NSString+LIAEncode.h"
+#import <WebKit/WebKit.h>
 
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 
@@ -28,14 +29,14 @@ NSString *kLinkedInErrorDomain = @"LIALinkedInERROR";
 NSString *kLinkedInDeniedByUser = @"the+user+denied+your+request";
 
 @interface LIALinkedInAuthorizationViewController ()
-@property(nonatomic, strong) UIWebView *authenticationWebView;
+@property(nonatomic, strong) WKWebView *authenticationWebView;
 @property(nonatomic, copy) LIAAuthorizationCodeFailureCallback failureCallback;
 @property(nonatomic, copy) LIAAuthorizationCodeSuccessCallback successCallback;
 @property(nonatomic, copy) LIAAuthorizationCodeCancelCallback cancelCallback;
 @property(nonatomic, strong) LIALinkedInApplication *application;
 @end
 
-@interface LIALinkedInAuthorizationViewController (UIWebViewDelegate) <UIWebViewDelegate>
+@interface LIALinkedInAuthorizationViewController (WKWebViewDelegate) <WKUIDelegate, WKNavigationDelegate>
 
 @end
 
@@ -57,18 +58,23 @@ BOOL handlingRedirectURL;
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-	if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7")) {
-		
-		self.edgesForExtendedLayout = UIRectEdgeNone;
-	}
-
-	UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(tappedCancelButton:)];
-	self.navigationItem.leftBarButtonItem = cancelButton;
-
-  self.authenticationWebView = [[UIWebView alloc] init];
-  self.authenticationWebView.delegate = self;
-  self.authenticationWebView.scalesPageToFit = YES;
-  [self.view addSubview:self.authenticationWebView];
+    if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7")) {
+        
+        self.edgesForExtendedLayout = UIRectEdgeNone;
+    }
+    
+    UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(tappedCancelButton:)];
+    self.navigationItem.leftBarButtonItem = cancelButton;
+    
+    WKWebViewConfiguration *webConfiguration = [[WKWebViewConfiguration alloc] init];
+    WKUserContentController *contentController = [[WKUserContentController alloc] init];
+    webConfiguration.userContentController = contentController;
+    
+    self.authenticationWebView = [[WKWebView alloc] initWithFrame:CGRectNull configuration:webConfiguration];
+    self.authenticationWebView.UIDelegate = self;
+    self.authenticationWebView.navigationDelegate = self;
+//    self.authenticationWebView.scalesPageToFit = YES;
+    [self.view addSubview:self.authenticationWebView];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -92,10 +98,10 @@ BOOL handlingRedirectURL;
 
 @end
 
-@implementation LIALinkedInAuthorizationViewController (UIWebViewDelegate)
+@implementation LIALinkedInAuthorizationViewController (WKWebViewDelegate)
 
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
-    NSURL *requestURL = [request URL];
+- (void)webView:(WKWebView *)webView didReceiveServerRedirectForProvisionalNavigation:(WKNavigation *)navigation {
+    NSURL *requestURL = [webView URL];
     NSString *url = [requestURL absoluteString];
 
     //prevent loading URL if it is the redirectURL
@@ -127,7 +133,6 @@ BOOL handlingRedirectURL;
             }
         }
     }
-    return !handlingRedirectURL;
 }
 
 - (NSString *)extractGetParameter: (NSString *) parameterName fromURL:(NSURL *)url {
@@ -136,10 +141,41 @@ BOOL handlingRedirectURL;
     for (NSString *qs in [urlString componentsSeparatedByString:@"&"]) {
         [mdQueryStrings setValue:[[[[qs componentsSeparatedByString:@"="] objectAtIndex:1]
                 stringByReplacingOccurrencesOfString:@"+" withString:@" "]
-                stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]
+                stringByRemovingPercentEncoding]
                           forKey:[[qs componentsSeparatedByString:@"="] objectAtIndex:0]];
     }
     return [mdQueryStrings objectForKey:parameterName];
+}
+
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
+    // Turn off network activity indicator upon finishing web view load
+    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+
+    /*fix for the LinkedIn Auth window - it doesn't scale right when placed into
+     a webview inside of a form sheet modal. If we transform the HTML of the page
+     a bit, and fix the viewport to 540px (the width of the form sheet), the problem
+     is solved.
+    */
+    if([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+        NSString* js =
+        @"var meta = document.createElement('meta'); "
+        @"meta.setAttribute( 'name', 'viewport' ); "
+        @"meta.setAttribute( 'content', 'width = 540px, initial-scale = 1.0, user-scalable = yes' ); "
+        @"document.getElementsByTagName('head')[0].appendChild(meta)";
+        
+        
+        [webView evaluateJavaScript:js completionHandler:^(id _Nullable result, NSError * _Nullable error) {
+            NSLog(@"result: %@, error: %@", result, error);
+        }];
+    }
+}
+
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    // Turn off network activity indicator upon failure to load web view
+    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+
+    if (!handlingRedirectURL)
+        self.failureCallback(error);
 }
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
@@ -149,27 +185,6 @@ BOOL handlingRedirectURL;
 
     if (!handlingRedirectURL)
         self.failureCallback(error);
-}
-
-- (void)webViewDidFinishLoad:(UIWebView *)webView {
-
-    // Turn off network activity indicator upon finishing web view load
-	[[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-
-	/*fix for the LinkedIn Auth window - it doesn't scale right when placed into
-	 a webview inside of a form sheet modal. If we transform the HTML of the page
-	 a bit, and fix the viewport to 540px (the width of the form sheet), the problem
-	 is solved.
-	*/
-	if([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
-		NSString* js =
-		@"var meta = document.createElement('meta'); "
-		@"meta.setAttribute( 'name', 'viewport' ); "
-		@"meta.setAttribute( 'content', 'width = 540px, initial-scale = 1.0, user-scalable = yes' ); "
-		@"document.getElementsByTagName('head')[0].appendChild(meta)";
-		
-		[webView stringByEvaluatingJavaScriptFromString: js];
-	}
 }
 
 @end
