@@ -178,13 +178,4 @@ BOOL handlingRedirectURL;
         self.failureCallback(error);
 }
 
-- (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
-
-    // Turn off network activity indicator upon failure to load web view
-    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-
-    if (!handlingRedirectURL)
-        self.failureCallback(error);
-}
-
 @end

@@ -27,7 +27,7 @@ typedef void(^LIAAuthorizationCodeCancelCallback)(void);
 typedef void(^LIAAuthorizationCodeFailureCallback)(NSError *errorReason);
 
 /**
- * View Controller subclass containing a `UIWebView` which will be used to display the LinkedIN web UI to perform the login.
+ * View Controller subclass containing a `WKWebView` which will be used to display the LinkedIN web UI to perform the login.
  **/
 @interface LIALinkedInAuthorizationViewController : UIViewController
 

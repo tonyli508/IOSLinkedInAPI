@@ -34,7 +34,7 @@
 
 /**
  * The default initializer.
- * @param redirectURL Has to be a http or https url (required by LinkedIn), but other than that, the endpoint doesn't have to respond anything. The library only uses the endpoint to know when to intercept calls in the UIWebView.
+ * @param redirectURL Has to be a http or https url (required by LinkedIn), but other than that, the endpoint doesn't have to respond anything. The library only uses the endpoint to know when to intercept calls in the WKWebView.
  * @param clientId The id which is provided by LinkedIn upon registering an application.
  * @param clientSecret The secret which is provided by LinkedIn upon registering an application.
  * @param state The state used to prevent Cross Site Request Forgery. Should be something that is hard to guess.
@@ -45,7 +45,7 @@
 
 /**
  * The default static initializer.
- * @param redirectURL Has to be a http or https url (required by LinkedIn), but other than that, the endpoint doesn't have to respond anything. The library only uses the endpoint to know when to intercept calls in the UIWebView.
+ * @param redirectURL Has to be a http or https url (required by LinkedIn), but other than that, the endpoint doesn't have to respond anything. The library only uses the endpoint to know when to intercept calls in the WKWebView.
  * @param clientId The id which is provided by LinkedIn upon registering an application.
  * @param clientSecret The secret which is provided by LinkedIn upon registering an application.
  * @param state The state used to prevent Cross Site Request Forgery. Should be something that is hard to guess.
@@ -59,7 +59,7 @@
  ** ************************************************************************************************ **/
 
 /**
- * Has to be a http or https url (required by LinkedIn), but other than that, the endpoint doesn't have to respond anything. The library only uses the endpoint to know when to intercept calls in the UIWebView.
+ * Has to be a http or https url (required by LinkedIn), but other than that, the endpoint doesn't have to respond anything. The library only uses the endpoint to know when to intercept calls in the WKWebView.
  **/
 @property(nonatomic, copy) NSString *redirectURL;
 

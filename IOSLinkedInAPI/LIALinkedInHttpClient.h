@@ -57,7 +57,7 @@
 /**
  * A LinkedIn client is created using a `LIALinkedInApplication` and is the network instance that will perform all requests to the LinkedIn API.
  * @param application A `LIALinkedInApplication` configured instance.
- * @param viewController The view controller that the UIWebView will be modally presented from. Passing nil assumes the root view controller.
+ * @param viewController The view controller that the WKWebView will be modally presented from. Passing nil assumes the root view controller.
  **/
 + (LIALinkedInHttpClient *)clientForApplication:(LIALinkedInApplication *)application presentingViewController:viewController;
 
