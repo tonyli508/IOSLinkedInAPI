@@ -1,6 +1,8 @@
 IOSLinkedInAPI
 ==============
 
+[![Join the chat at https://gitter.im/tonyli508/IOSLinkedInAPI](https://badges.gitter.im/tonyli508/IOSLinkedInAPI.svg)](https://gitter.im/tonyli508/IOSLinkedInAPI?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 *Note:* As of the 12´ May 2015 LinkedIn applied restrictions to API usage for all non partners:
 See: https://developer.linkedin.com/blog/posts/2015/developer-program-changes
 
